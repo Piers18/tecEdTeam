@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/openai/openai-go"
@@ -40,5 +41,68 @@ func TestSessionStore_IsolatesSessionsFromEachOther(t *testing.T) {
 	}
 	if len(s.Get("b")) != 1 {
 		t.Fatal("session b should have 1 message")
+	}
+}
+
+func TestSessionStore_GetReturnsCopy(t *testing.T) {
+	s := NewSessionStore()
+	s.Append("sess", openai.UserMessage("original"))
+
+	hist := s.Get("sess")
+	// Mutate the returned slice — should not affect the stored state.
+	hist = append(hist, openai.AssistantMessage("injected"))
+
+	stored := s.Get("sess")
+	if len(stored) != 1 {
+		t.Errorf("mutation of returned slice should not affect stored messages, got %d", len(stored))
+	}
+}
+
+func TestSessionStore_ExistsReturnsFalseForUnknownSession(t *testing.T) {
+	s := NewSessionStore()
+	if s.Exists("nonexistent") {
+		t.Fatal("Exists should return false for unknown session")
+	}
+}
+
+func TestSessionStore_DeleteNonexistentIsNoOp(t *testing.T) {
+	s := NewSessionStore()
+	// Should not panic.
+	s.Delete("ghost")
+}
+
+func TestSessionStore_ConcurrentAccess(t *testing.T) {
+	s := NewSessionStore()
+	const goroutines = 50
+	var wg sync.WaitGroup
+	wg.Add(goroutines * 2)
+
+	// Concurrent writers.
+	for i := 0; i < goroutines; i++ {
+		go func(n int) {
+			defer wg.Done()
+			id := "session"
+			s.Append(id, openai.UserMessage("msg"))
+		}(i)
+	}
+	// Concurrent readers.
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			s.Get("session")
+		}()
+	}
+	wg.Wait()
+}
+
+func TestSessionStore_AppendMultipleAtOnce(t *testing.T) {
+	s := NewSessionStore()
+	s.Append("sess",
+		openai.UserMessage("a"),
+		openai.AssistantMessage("b"),
+		openai.UserMessage("c"),
+	)
+	if n := len(s.Get("sess")); n != 3 {
+		t.Errorf("expected 3 messages, got %d", n)
 	}
 }
