@@ -2,6 +2,23 @@
 
 Personal movie and TV series tracker with AI chat assistant.
 
+## Screenshots
+
+### Search
+Search movies and TV series via TMDB, then add them to your watchlist in one click.
+
+![Search](docs/screenshots/search.png)
+
+### Watchlist
+Filter by status, type, sort order, and mark items as watched with a rating.
+
+![Watchlist](docs/screenshots/watchlist.png)
+
+### AI Chat
+Ask the assistant about your watchlist, get personalized recommendations, and explore movies.
+
+![Chat](docs/screenshots/chat.png)
+
 ## Prerequisites
 
 - Docker and Docker Compose
