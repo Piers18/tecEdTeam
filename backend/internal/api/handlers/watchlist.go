@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -120,6 +121,10 @@ func (h *WatchlistHandler) MarkWatched(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.WatchedAt == "" {
 		respond.Error(w, http.StatusBadRequest, "watched_at is required (YYYY-MM-DD)")
+		return
+	}
+	if _, err := time.Parse("2006-01-02", req.WatchedAt); err != nil {
+		respond.Error(w, http.StatusBadRequest, "watched_at must be in YYYY-MM-DD format")
 		return
 	}
 	if req.Rating < 1 || req.Rating > 10 {

@@ -32,11 +32,13 @@ func NewAgent(apiKey string, repo *watchlist.Repository, tmdbClient *tmdb.Client
 	}
 }
 
+const maxToolRounds = 10
+
 // Chat sends a user message, runs tool calls as needed, and returns the final reply.
 func (a *Agent) Chat(ctx context.Context, sessionID, userMessage string) (string, error) {
 	a.sessions.Append(sessionID, openai.UserMessage(userMessage))
 
-	for {
+	for round := 0; round < maxToolRounds; round++ {
 		history := a.sessions.Get(sessionID)
 		messages := make([]openai.ChatCompletionMessageParamUnion, 0, len(history)+1)
 		messages = append(messages, openai.SystemMessage(systemPrompt))
@@ -51,6 +53,9 @@ func (a *Agent) Chat(ctx context.Context, sessionID, userMessage string) (string
 			return "", fmt.Errorf("openai: %w", err)
 		}
 
+		if len(resp.Choices) == 0 {
+			return "", fmt.Errorf("openai returned no choices")
+		}
 		choice := resp.Choices[0]
 
 		if choice.FinishReason == openai.ChatCompletionChoicesFinishReasonToolCalls {
@@ -84,6 +89,7 @@ func (a *Agent) Chat(ctx context.Context, sessionID, userMessage string) (string
 		a.sessions.Append(sessionID, openai.AssistantMessage(content))
 		return content, nil
 	}
+	return "", fmt.Errorf("exceeded max tool-call rounds (%d)", maxToolRounds)
 }
 
 // ClearSession deletes a session's history.

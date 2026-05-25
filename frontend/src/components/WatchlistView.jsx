@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { api } from '../api/client.js'
 import WatchlistItem from './WatchlistItem.jsx'
 
@@ -8,7 +8,7 @@ export default function WatchlistView() {
   const [error, setError] = useState('')
   const [filters, setFilters] = useState({ status: 'all', type: 'all', sort: 'added_at', order: 'desc' })
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
@@ -19,9 +19,9 @@ export default function WatchlistView() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
 
-  useEffect(() => { load() }, [filters])
+  useEffect(() => { load() }, [load])
 
   return (
     <div>

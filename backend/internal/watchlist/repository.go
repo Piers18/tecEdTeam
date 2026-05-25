@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -33,8 +34,8 @@ func (r *Repository) Add(ctx context.Context, req AddItemRequest) (*Item, error)
 		Scan(&item.ID, &item.TmdbID, &item.MediaType, &item.Title,
 			&item.PosterPath, &item.Overview, &item.AddedAt)
 	if err != nil {
-		if strings.Contains(err.Error(), "unique") ||
-			strings.Contains(err.Error(), "duplicate") {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return nil, ErrAlreadyExists
 		}
 		return nil, err
@@ -64,7 +65,8 @@ func (r *Repository) MarkWatched(ctx context.Context, itemID int, req MarkWatche
 	`, itemID, req.WatchedAt, req.Rating).
 		Scan(&wr.ID, &wr.WatchedAt, &wr.Rating, &wr.CreatedAt)
 	if err != nil {
-		if strings.Contains(err.Error(), "foreign key") {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
 			return nil, ErrNotFound
 		}
 		return nil, err
