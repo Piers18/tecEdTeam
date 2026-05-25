@@ -1,0 +1,26 @@
+github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsAFQXjEQFXC5A5Hq1eFTZvvQb9qxHMGk=
+github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6Gvz0BUl5/SMl7ibJHe7fBIXLvjyJ3H7/M=
+github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f h1:lO4WD4F/rVNCu3tzItzJUnTHRy0BGVgZ2Vv8+co3S0=
+github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cuUVRXasLTGQfiPw+s/XETQ/lnfx5LFrwotZo5ZN0M=
+github.com/go-chi/chi/v5 v5.1.0 h1:acVI1Mv0rvfHoWwdo+9VWE1QWrZzRP6IH0T4f50uQA=
+github.com/go-chi/chi/v5 v5.1.0/go.mod h1:DslYQSixyM3SN6ibJbEWmqyQ3j07CCAeoqq7UJrK10=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Cor1+CRLP7QQma8=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGkdin/v13BQOoRXoxlkHQ=
+github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62AdJWhoa4qfXHsOcIViD4XyYfs4=
+github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj7Vid0gqXvArWm45Y/NiRI7A=
+github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a h1:bbPeKD0xmW/UEo7bD4sUIi8syVNAo3dij7A6v572gQ=
+github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a/go.mod h1:5 KUplus3IpcGkwtysrJ2eL7QXepXNd4DqQ5+9jgKqk=
+github.com/jackc/pgx/v5 v5.6.0 h1:SWJzGzS5bNn7I+8FDRW5j+BcTOIaIYiI9i+N2QCDw=
+github.com/jackc/pgx/v5 v5.6.0/go.mod h1:q6iHT8uDKSge01zxjlqFichAt6mY4rS2c0C9Rv7MD8=
+github.com/jackc/puddle/v2 v2.2.1 h1:RhxXJtFePMH6KZJ7a5/cqVX0XpHecd2xQwVNCxf3xQ=
+github.com/jackc/puddle/v2 v2.2.1/go.mod h1:vriiEXLeDLRHGPs7BS+DlarDTNwA0ash8L2yStBjt4=
+github.com/joho/godotenv v1.5.1 h1:7P4SfwW0erCJjbNVQQ7AkYixsvyZS4ngIueNsT1pFY=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa49BgYvf0F8=
+github.com/openai/openai-go v0.1.0-alpha.40 h1:xVjKpkxVhZvyXMxdz4KMn4LN+4cpDhYv3VqpuQ7C3g=
+github.com/openai/openai-go v0.1.0-alpha.40/go.mod h1:Q9B0f6F3i9rVEVKcjdYi4KeCtVPuF8cHLGcfQOPHW4=
+golang.org/x/crypto v0.24.0 h1:mnl8DM0o513PjTyxf7k36TkDVj0FQ+zr4WDtfALrevM=
+golang.org/x/crypto v0.24.0/go.mod h1:Z1VMWKCUICHII20neBHbwIB6DpwUP/amWUstIvqOaQ=
+golang.org/x/sync v0.7.0 h1:YsImfSBoP9QZHZS4axLauVnPAc2/NMmcci6hhk528c=
+golang.org/x/sync v0.7.0/go.mod h1:Czt+wKu+jkqNfs==
+golang.org/x/text v0.16.0 h1:a94ExnEXNvDDHQUJk+GzbaOd72-K59UIi5kdP1I6kn0=
+golang.org/x/text v0.16.0/go.mod h1:GhwF1Be+LQoKShO3cGOHzqOgRrGrW3nCL+3+3T4SVM=
