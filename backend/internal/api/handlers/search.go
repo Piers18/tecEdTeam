@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"movie-tracker/internal/api"
 	"movie-tracker/internal/cache"
+	"movie-tracker/internal/respond"
 	"movie-tracker/internal/tmdb"
 )
 
@@ -24,7 +24,7 @@ func NewSearchHandler(t *tmdb.Client, c *cache.Cache) *SearchHandler {
 func (h *SearchHandler) Search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 	if q == "" {
-		api.Error(w, http.StatusBadRequest, "q parameter is required")
+		respond.Error(w, http.StatusBadRequest, "q parameter is required")
 		return
 	}
 
@@ -33,7 +33,7 @@ func (h *SearchHandler) Search(w http.ResponseWriter, r *http.Request) {
 		mediaType = "all"
 	}
 	if mediaType != "all" && mediaType != "movie" && mediaType != "tv" {
-		api.Error(w, http.StatusBadRequest, "type must be all, movie, or tv")
+		respond.Error(w, http.StatusBadRequest, "type must be all, movie, or tv")
 		return
 	}
 
@@ -41,7 +41,7 @@ func (h *SearchHandler) Search(w http.ResponseWriter, r *http.Request) {
 	if ps := r.URL.Query().Get("page"); ps != "" {
 		p, err := strconv.Atoi(ps)
 		if err != nil || p < 1 {
-			api.Error(w, http.StatusBadRequest, "page must be a positive integer")
+			respond.Error(w, http.StatusBadRequest, "page must be a positive integer")
 			return
 		}
 		page = p
@@ -69,7 +69,7 @@ func (h *SearchHandler) Search(w http.ResponseWriter, r *http.Request) {
 		result, err = h.tmdb.SearchMulti(r.Context(), q, page)
 	}
 	if err != nil {
-		api.Error(w, http.StatusBadGateway, "TMDB search failed: "+err.Error())
+		respond.Error(w, http.StatusBadGateway, "TMDB search failed: "+err.Error())
 		return
 	}
 

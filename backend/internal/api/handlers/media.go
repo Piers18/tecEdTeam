@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"movie-tracker/internal/api"
 	"movie-tracker/internal/cache"
+	"movie-tracker/internal/respond"
 	"movie-tracker/internal/tmdb"
 )
 
@@ -26,7 +26,7 @@ func NewMediaHandler(t *tmdb.Client, c *cache.Cache) *MediaHandler {
 func (h *MediaHandler) GetMovie(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		api.Error(w, http.StatusBadRequest, "invalid movie id")
+		respond.Error(w, http.StatusBadRequest, "invalid movie id")
 		return
 	}
 
@@ -41,7 +41,7 @@ func (h *MediaHandler) GetMovie(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := h.tmdb.GetMovie(r.Context(), id)
 	if err != nil {
-		api.Error(w, http.StatusBadGateway, "TMDB movie detail failed: "+err.Error())
+		respond.Error(w, http.StatusBadGateway, "TMDB movie detail failed: "+err.Error())
 		return
 	}
 
@@ -55,7 +55,7 @@ func (h *MediaHandler) GetMovie(w http.ResponseWriter, r *http.Request) {
 func (h *MediaHandler) GetTV(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		api.Error(w, http.StatusBadRequest, "invalid tv id")
+		respond.Error(w, http.StatusBadRequest, "invalid tv id")
 		return
 	}
 
@@ -70,7 +70,7 @@ func (h *MediaHandler) GetTV(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := h.tmdb.GetTV(r.Context(), id)
 	if err != nil {
-		api.Error(w, http.StatusBadGateway, "TMDB TV detail failed: "+err.Error())
+		respond.Error(w, http.StatusBadGateway, "TMDB TV detail failed: "+err.Error())
 		return
 	}
 
