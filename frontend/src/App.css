@@ -1,0 +1,11 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #0f0f0f; color: #e0e0e0; }
+.app { max-width: 960px; margin: 0 auto; padding: 1rem; }
+.app-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #333; margin-bottom: 1.5rem; }
+.app-header h1 { font-size: 1.5rem; }
+nav { display: flex; gap: 0.5rem; }
+nav button { background: #1e1e1e; color: #ccc; border: 1px solid #333; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; }
+nav button.active { background: #e50914; color: white; border-color: #e50914; }
+button { cursor: pointer; }
+.app-main { min-height: 80vh; }
+input, select, textarea { background: #1e1e1e; color: #e0e0e0; border: 1px solid #444; border-radius: 4px; padding: 0.5rem; }
