@@ -9,7 +9,7 @@ github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGkdin/v13BQOoRXoxlk
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62AdJWhoa4qfXHsOcIViD4XyYfs4=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj7Vid0gqXvArWm45Y/NiRI7A=
 github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a h1:bbPeKD0xmW/UEo7bD4sUIi8syVNAo3dij7A6v572gQ=
-github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a/go.mod h1:5 KUplus3IpcGkwtysrJ2eL7QXepXNd4DqQ5+9jgKqk=
+github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a/go.mod h1:5KUplus3IpcGkwtysrJ2eL7QXepXNd4DqQ5+9jgKqk=
 github.com/jackc/pgx/v5 v5.6.0 h1:SWJzGzS5bNn7I+8FDRW5j+BcTOIaIYiI9i+N2QCDw=
 github.com/jackc/pgx/v5 v5.6.0/go.mod h1:q6iHT8uDKSge01zxjlqFichAt6mY4rS2c0C9Rv7MD8=
 github.com/jackc/puddle/v2 v2.2.1 h1:RhxXJtFePMH6KZJ7a5/cqVX0XpHecd2xQwVNCxf3xQ=
