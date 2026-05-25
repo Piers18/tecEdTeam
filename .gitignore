@@ -4,3 +4,7 @@ __debug_bin
 /backend/tmp/
 /frontend/node_modules/
 /frontend/dist/
+*.out
+.DS_Store
+.vscode/
+.idea/
