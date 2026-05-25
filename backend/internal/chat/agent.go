@@ -54,8 +54,22 @@ func (a *Agent) Chat(ctx context.Context, sessionID, userMessage string) (string
 		choice := resp.Choices[0]
 
 		if choice.FinishReason == openai.ChatCompletionChoicesFinishReasonToolCalls {
-			// Append the assistant message containing tool_calls
-			a.sessions.Append(sessionID, choice.Message.ToParam())
+			// Manually build the assistant param since ToParam() is not in this SDK version.
+			tcParams := make([]openai.ChatCompletionMessageToolCallParam, len(choice.Message.ToolCalls))
+			for i, tc := range choice.Message.ToolCalls {
+				tcParams[i] = openai.ChatCompletionMessageToolCallParam{
+					ID:   openai.F(tc.ID),
+					Type: openai.F(openai.ChatCompletionMessageToolCallTypeFunction),
+					Function: openai.F(openai.ChatCompletionMessageToolCallFunctionParam{
+						Name:      openai.F(tc.Function.Name),
+						Arguments: openai.F(tc.Function.Arguments),
+					}),
+				}
+			}
+			a.sessions.Append(sessionID, openai.ChatCompletionAssistantMessageParam{
+				Role:      openai.F(openai.ChatCompletionAssistantMessageParamRoleAssistant),
+				ToolCalls: openai.F(tcParams),
+			})
 
 			// Execute every requested tool and append results
 			for _, tc := range choice.Message.ToolCalls {
