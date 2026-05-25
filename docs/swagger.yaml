@@ -1,0 +1,613 @@
+openapi: 3.0.3
+info:
+  title: Movie Tracker API
+  description: |
+    REST API for Movie Tracker — a personal movie and TV series tracker with an AI chat assistant.
+
+    **Base URL:** `http://localhost:8080`
+
+    **Cache headers:** Cached responses include `X-Cache: HIT`.
+  version: 1.0.0
+  contact:
+    name: Movie Tracker
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: Search
+    description: Search movies and TV series via TMDB (results cached in Redis)
+  - name: Media
+    description: Fetch detailed information about a specific movie or TV series (cached 24 h)
+  - name: Watchlist
+    description: Manage the personal watchlist
+  - name: Chat
+    description: AI chat assistant with function-calling tools
+
+paths:
+  /api/search:
+    get:
+      tags: [Search]
+      summary: Search TMDB for movies and/or TV series
+      description: |
+        Proxies a search query to TMDB. Results are cached in Redis for **10 minutes**.
+        Responses that were served from the cache include the header `X-Cache: HIT`.
+      operationId: searchMedia
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search term
+          schema:
+            type: string
+            example: Inception
+        - name: type
+          in: query
+          required: false
+          description: Media type filter
+          schema:
+            type: string
+            enum: [all, movie, tv]
+            default: all
+        - name: page
+          in: query
+          required: false
+          description: Page number (TMDB pagination)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        "200":
+          description: Search results from TMDB
+          headers:
+            X-Cache:
+              description: HIT when served from Redis cache, absent on a miss
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+  /api/media/movie/{id}:
+    get:
+      tags: [Media]
+      summary: Get movie details from TMDB
+      description: Returns full TMDB movie detail object. Cached in Redis for **24 hours**.
+      operationId: getMovie
+      parameters:
+        - $ref: "#/components/parameters/TmdbId"
+      responses:
+        "200":
+          description: Movie detail
+          headers:
+            X-Cache:
+              description: HIT when served from cache
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+  /api/media/tv/{id}:
+    get:
+      tags: [Media]
+      summary: Get TV series details from TMDB
+      description: Returns full TMDB TV detail object. Cached in Redis for **24 hours**.
+      operationId: getTVSeries
+      parameters:
+        - $ref: "#/components/parameters/TmdbId"
+      responses:
+        "200":
+          description: TV series detail
+          headers:
+            X-Cache:
+              description: HIT when served from cache
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+  /api/watchlist:
+    get:
+      tags: [Watchlist]
+      summary: List watchlist items
+      description: |
+        Returns all watchlist items for the user. Supports filtering by watch status
+        and media type, as well as sorting. Results are fetched with a single
+        SQL query built at runtime (no in-memory filtering).
+      operationId: listWatchlist
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filter by watch status
+          schema:
+            type: string
+            enum: [all, watched, unwatched]
+            default: all
+        - name: type
+          in: query
+          required: false
+          description: Filter by media type
+          schema:
+            type: string
+            enum: [all, movie, tv]
+            default: all
+        - name: sort
+          in: query
+          required: false
+          description: Column to sort by
+          schema:
+            type: string
+            enum: [added_at, title, rating]
+            default: added_at
+        - name: order
+          in: query
+          required: false
+          description: Sort direction
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        "200":
+          description: Array of watchlist items (empty array when none match)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WatchlistItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      tags: [Watchlist]
+      summary: Add item to watchlist
+      description: Adds a movie or TV series to the watchlist. Returns `409 Conflict` if the item is already present (unique constraint on `tmdb_id + media_type`).
+      operationId: addWatchlistItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddItemRequest"
+      responses:
+        "201":
+          description: Item successfully added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: Item already exists in the watchlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: item already in watchlist
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/watchlist/{id}:
+    get:
+      tags: [Watchlist]
+      summary: Get a single watchlist item
+      description: Returns a watchlist item including its watch record (if it has been marked as watched).
+      operationId: getWatchlistItem
+      parameters:
+        - $ref: "#/components/parameters/WatchlistItemId"
+      responses:
+        "200":
+          description: Watchlist item detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      tags: [Watchlist]
+      summary: Remove item from watchlist
+      description: Permanently removes the item and its associated watch record (CASCADE DELETE).
+      operationId: deleteWatchlistItem
+      parameters:
+        - $ref: "#/components/parameters/WatchlistItemId"
+      responses:
+        "204":
+          description: Item deleted — no body returned
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/watchlist/{id}/watch:
+    post:
+      tags: [Watchlist]
+      summary: Mark item as watched (upsert)
+      description: |
+        Creates or updates the watch record for a watchlist item.
+        Because the unique constraint on `watchlist_item_id` enforces at most one
+        record per item, this is an **upsert** — calling it again updates the existing record.
+      operationId: markWatched
+      parameters:
+        - $ref: "#/components/parameters/WatchlistItemId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkWatchedRequest"
+      responses:
+        "200":
+          description: Watch record created or updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchRecord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      tags: [Watchlist]
+      summary: Unmark item as watched
+      description: Deletes the watch record, reverting the item to "unwatched" status.
+      operationId: unmarkWatched
+      parameters:
+        - $ref: "#/components/parameters/WatchlistItemId"
+      responses:
+        "204":
+          description: Watch record removed — no body returned
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: No watch record exists for this item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/chat:
+    post:
+      tags: [Chat]
+      summary: Send a message to the AI assistant
+      description: |
+        Sends a user message to the AI agent (GPT-4o Mini with function calling).
+        If `session_id` is omitted a new UUID session is created and returned in the response.
+        Pass the returned `session_id` in subsequent requests to maintain conversation history.
+
+        The agent may call internal tools (get_watchlist, get_watched_with_ratings,
+        get_watchlist_item, search_tmdb) before replying. Tool-call rounds are capped at 10
+        per request to prevent infinite loops.
+      operationId: chatSend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: Agent reply with the session ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/chat/{sessionId}:
+    delete:
+      tags: [Chat]
+      summary: Clear chat session history
+      description: Removes all messages stored in memory for the given session. The session ID can then be reused for a fresh conversation.
+      operationId: clearChatSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: UUID of the chat session to clear
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Session cleared — no body returned
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  parameters:
+    TmdbId:
+      name: id
+      in: path
+      required: true
+      description: TMDB content ID
+      schema:
+        type: integer
+        example: 27205
+
+    WatchlistItemId:
+      name: id
+      in: path
+      required: true
+      description: Internal watchlist item ID (from the `watchlist_items` table)
+      schema:
+        type: integer
+        example: 1
+
+  schemas:
+    SearchResult:
+      type: object
+      description: Paginated TMDB search response
+      properties:
+        page:
+          type: integer
+        total_pages:
+          type: integer
+        total_results:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchResultItem"
+
+    SearchResultItem:
+      type: object
+      description: A single result from TMDB's multi/movie/tv search endpoint
+      properties:
+        id:
+          type: integer
+          description: TMDB ID
+        media_type:
+          type: string
+          enum: [movie, tv]
+        title:
+          type: string
+          description: Movie title (movies only)
+        name:
+          type: string
+          description: Series name (TV only)
+        poster_path:
+          type: string
+          nullable: true
+          description: TMDB poster path (prefix with https://image.tmdb.org/t/p/w500)
+        overview:
+          type: string
+        release_date:
+          type: string
+          format: date
+          description: Release date (movies only)
+        first_air_date:
+          type: string
+          format: date
+          description: First air date (TV only)
+        vote_average:
+          type: number
+          format: float
+
+    MediaDetail:
+      type: object
+      description: Full TMDB detail object (passthrough — schema mirrors TMDB API response)
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+          description: Present for movies
+        name:
+          type: string
+          description: Present for TV series
+        overview:
+          type: string
+        poster_path:
+          type: string
+          nullable: true
+        backdrop_path:
+          type: string
+          nullable: true
+        release_date:
+          type: string
+          format: date
+        first_air_date:
+          type: string
+          format: date
+        vote_average:
+          type: number
+        genres:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+        runtime:
+          type: integer
+          description: Runtime in minutes (movies)
+        number_of_seasons:
+          type: integer
+          description: Number of seasons (TV)
+
+    WatchlistItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Internal primary key
+        tmdb_id:
+          type: integer
+          description: TMDB content ID
+        media_type:
+          type: string
+          enum: [movie, tv]
+        title:
+          type: string
+        poster_path:
+          type: string
+          nullable: true
+        overview:
+          type: string
+        added_at:
+          type: string
+          format: date-time
+        watch_record:
+          nullable: true
+          description: Present when the item has been marked as watched; null otherwise
+          allOf:
+            - $ref: "#/components/schemas/WatchRecord"
+
+    WatchRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        watchlist_item_id:
+          type: integer
+        watched_at:
+          type: string
+          format: date
+          example: "2024-03-15"
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 10
+        created_at:
+          type: string
+          format: date-time
+
+    AddItemRequest:
+      type: object
+      required: [tmdb_id, media_type, title]
+      properties:
+        tmdb_id:
+          type: integer
+          description: TMDB content ID
+          example: 27205
+        media_type:
+          type: string
+          enum: [movie, tv]
+        title:
+          type: string
+          example: Inception
+        poster_path:
+          type: string
+          nullable: true
+          example: /9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg
+        overview:
+          type: string
+
+    MarkWatchedRequest:
+      type: object
+      required: [watched_at, rating]
+      properties:
+        watched_at:
+          type: string
+          format: date
+          example: "2024-03-15"
+          description: Date the content was watched (YYYY-MM-DD)
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Personal rating from 1 to 10
+
+    ChatRequest:
+      type: object
+      required: [message]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Session UUID. Omit to start a new conversation; the response will contain the assigned session_id.
+        message:
+          type: string
+          description: User's message to the AI assistant
+          example: What should I watch next based on my ratings?
+
+    ChatResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Session UUID — persist this to continue the conversation
+        reply:
+          type: string
+          description: AI assistant's response
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters or body
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    InternalServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    BadGateway:
+      description: Upstream TMDB API error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
